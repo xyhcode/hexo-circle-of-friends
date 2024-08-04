@@ -95,7 +95,7 @@ def query_all(li, start: int = 0, end: int = -1, rule: str = "updated"):
         data['friends_loss'] = friends_loss
         return data
     except Exception as e:
-        return {"message": "服务器内部错误！！！ 请联系管理人员！"+e}
+        return {"message": "服务器内部错误！！！ 请联系管理人员！" + str(e)}
 
 
 def query_friend():
