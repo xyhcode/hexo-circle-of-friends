@@ -9,6 +9,8 @@ from ..utils import baselogger, project
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from datetime import datetime, timedelta
+import requests
+from requests.exceptions import RequestException
 
 today = (datetime.utcnow() + timedelta(hours=8)).strftime('%Y-%m-%d %H:%M:%S')
 logger = baselogger.get_logger(__name__)
@@ -96,8 +98,8 @@ class SQLPipeline:
         logger.info("----------------------")
         logger.info("友链总数 : %d" % self.session.query(models.Friend).count())
         logger.info("失联友链数 : %d" % self.session.query(models.Friend).filter_by(error=True).count())
+        logger.info("站点异常友链数 : %d" % self.session.query(models.Friend).filter_by(loss=True).count())
         logger.info("共 %d 篇文章" % self.session.query(models.Post).count())
-
         logger.info("最后运行于：%s" % today)
         logger.info("done!")
 
@@ -126,6 +128,8 @@ class SQLPipeline:
         # print('共删除了%s篇文章' % out_date_post)
         # print('\n')
         # print('-------结束删除规则----------')
+
+
 
     def friendlist_push(self, settings):
         for user in self.userdata:
@@ -161,6 +165,8 @@ class SQLPipeline:
                     friend.error = True
             self.session.add(friend)
             self.session.commit()
+
+
 
     def friendpoor_push(self, item):
         post = models.Post(
