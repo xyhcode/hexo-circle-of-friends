@@ -36,54 +36,66 @@ async def vercel_update_db():
 
 
 def query_all(li, start: int = 0, end: int = -1, rule: str = "updated"):
-    session = db_interface.db_init()
-    article_num = session.query(Post).count()
-    # 检查start、end的合法性
-    start, end, message = start_end_check(start, end, article_num)
-    if message:
-        return {"message": message}
-    # 检查rule的合法性
-    if rule != "created" and rule != "updated":
-        return {"message": "rule error, please use 'created'/'updated'"}
+    try:
+        session = db_interface.db_init()
+        article_num = session.query(Post).count()
+         # 检查start、end的合法性
+        start, end, message = start_end_check(start, end, article_num)
+        if message:
+            return {"message": message}
+        # 检查rule的合法性
+        if rule != "created" and rule != "updated":
+            return {"message": "rule error, please use 'created'/'updated'"}
 
-    posts = session.query(Post).order_by(desc(rule)).offset(start).limit(end - start).all()
-    last_update_time_results = session.query(Post).limit(1000).with_entities(Post.createAt).all()
-    last_update_time = max(x[0].strftime("%Y-%m-%d %H:%M:%S") for x in last_update_time_results)
+        posts = session.query(Post).order_by(
+            desc(rule)).offset(start).limit(end - start).all()
+        last_update_time_results = session.query(Post).limit(
+            1000).with_entities(Post.createAt).all()
+        last_update_time = max(x[0].strftime("%Y-%m-%d %H:%M:%S")
+                            for x in last_update_time_results)
 
-    friends_num = session.query(Friend).count()
-    active_num = session.query(Friend).filter_by(error=False).count()
-    error_num = friends_num - active_num
+        friends_num = session.query(Friend).count()
+        active_num = session.query(Friend).filter_by(error=False).count()
+        error_num = friends_num - active_num
+        loss_num = session.query(models.Friend).filter_by(loss=True).count()
 
-    all_friends = session.query(Friend).all()
-    friends_error = []
-    for friend in all_friends:
-        if friend.error:
+        all_friends = session.query(Friend).all()
+        friends_loss = []
+        friends_error = []
+        for friend in all_friends:
             item = {
-                'name': friend.name,
-                'link': friend.link,
-                'avatar': friend.avatar
+                    'name': friend.name,
+                    'link': friend.link,
+                    'avatar': friend.avatar
             }
-            friends_error.append(item)
+            if friend.loss:
+                friends_loss.append(item)
+            if friend.error:
+                friends_error.append(item)
 
-    data = {}
-    data['statistical_data'] = {
-        'friends_num': friends_num,
-        'active_num': active_num,
-        'error_num': error_num,
-        'article_num': article_num,
-        'last_updated_time': last_update_time
-    }
+        data = {}
+        data['statistical_data'] = {
+            'friends_num': friends_num,
+            'active_num': active_num,
+            'error_num': error_num,
+            'loss_num': loss_num,
+            'article_num': article_num,
+            'last_updated_time': last_update_time
+        }
 
-    post_data = []
-    for k in range(len(posts)):
-        item = {'floor': start + k + 1}
-        for elem in li:
-            item[elem] = getattr(posts[k], elem)
-        post_data.append(item)
-    session.close()
-    data['article_data'] = post_data
-    data['friends_error'] = friends_error
-    return data
+        post_data = []
+        for k in range(len(posts)):
+            item = {'floor': start + k + 1}
+            for elem in li:
+                item[elem] = getattr(posts[k], elem)
+            post_data.append(item)
+        session.close()
+        data['article_data'] = post_data
+        data['friends_error'] = friends_error
+        data['friends_loss'] = friends_loss
+        return data
+    except Exception as e:
+        return {"message": "服务器内部错误！！！ 请联系管理人员！"}
 
 
 def query_friend():

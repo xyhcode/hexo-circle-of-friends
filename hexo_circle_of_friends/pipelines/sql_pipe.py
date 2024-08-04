@@ -137,18 +137,28 @@ class SQLPipeline:
             if user[0] in self.nonerror_data:
                 # print("未失联的用户")
                 friend.error = False
-            elif settings["BLOCK_SITE"]:
-                error = True
-                for url in settings["BLOCK_SITE"]:
-                    if re.match(url, friend.link):
-                        friend.error = False
-                        error = False
-                if error:
-                    logger.error("请求失败，请检查链接： %s" % friend.link)
-                    friend.error = True
+                friend.loss = False
             else:
-                logger.error("请求失败，请检查链接： %s" % friend.link)
-                friend.error = True
+                error = True
+                if settings["BLOCK_SITE"]:
+                    for url in settings["BLOCK_SITE"]:
+                        if re.match(url, friend.link):
+                            friend.error = False
+                            friend.loss = False
+                            error = False
+                            break
+                if error:
+                    friend.error = True
+                    friend.loss = False
+                    logger.error("请求失败，请检查链接： %s" % friend.link)
+                    try:
+                        response = requests.get(friend.link,headers={'User-Agent': 'Mozilla/5.0'}, timeout=5.0)
+                        if response.status_code != 200:
+                            friend.loss = True
+                    except RequestException as e:
+                        friend.loss = True
+                else:
+                    friend.error = True
             self.session.add(friend)
             self.session.commit()
 

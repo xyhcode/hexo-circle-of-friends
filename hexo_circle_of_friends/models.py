@@ -23,6 +23,7 @@ class Friend(AbstractBase):
     link = Column(String(1024))
     avatar = Column(String(1024))
     error = Column(BOOLEAN)
+    loss = Column(BOOLEAN)
     createAt = Column(DateTime, default=datetime.utcnow() + timedelta(hours=8))
 
 
