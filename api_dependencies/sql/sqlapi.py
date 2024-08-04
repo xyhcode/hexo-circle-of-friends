@@ -95,7 +95,7 @@ def query_all(li, start: int = 0, end: int = -1, rule: str = "updated"):
         data['friends_loss'] = friends_loss
         return data
     except Exception as e:
-        return {"message": "服务器内部错误！！！ 请联系管理人员！"}
+        return {"message": "服务器内部错误！！！ 请联系管理人员！"+e}
 
 
 def query_friend():
@@ -125,9 +125,11 @@ def query_random_friend(num):
     session = db_interface.db_init()
     settings = get_user_settings()
     if settings["DATABASE"] == "sqlite":
-        data: list = session.query(Friend).order_by(func.random()).limit(num).all()
+        data: list = session.query(Friend).order_by(
+            func.random()).limit(num).all()
     else:
-        data: list = session.query(Friend).order_by(func.rand()).limit(num).all()
+        data: list = session.query(Friend).order_by(
+            func.rand()).limit(num).all()
     session.close()
     friend_list_json = []
     if data:
@@ -150,7 +152,8 @@ def query_random_post(num):
     session = db_interface.db_init()
     settings = get_user_settings()
     if settings["DATABASE"] == "sqlite":
-        data: list = session.query(Post).order_by(func.random()).limit(num).all()
+        data: list = session.query(Post).order_by(
+            func.random()).limit(num).all()
     else:
         data: list = session.query(Post).order_by(func.rand()).limit(num).all()
     session.close()
@@ -175,11 +178,13 @@ def query_random_post(num):
 def query_post(link, num, rule, ):
     session = db_interface.db_init()
     if link is None:
-        user = session.query(Friend).filter_by(error=False).order_by(func.random()).first()
+        user = session.query(Friend).filter_by(
+            error=False).order_by(func.random()).first()
         domain = parse.urlsplit(user.link).netloc
     else:
         domain = parse.urlsplit(link).netloc
-        user = session.query(Friend).filter(Friend.link.like("%{:s}%".format(domain))).first()
+        user = session.query(Friend).filter(
+            Friend.link.like("%{:s}%".format(domain))).first()
 
     posts = session.query(Post).filter(Post.link.like("%{:s}%".format(domain))).order_by(desc(rule)).limit(
         num if num > 0 else None).all()
@@ -237,7 +242,8 @@ def query_friend_status(days):
                 pass
     # 统计信息更新，失联友链更新
     friend_status["total_not_lost_num"] = len(not_lost_friends)
-    friend_status["total_lost_num"] = friend_status["total_friend_num"] - friend_status["total_not_lost_num"]
+    friend_status["total_lost_num"] = friend_status["total_friend_num"] - \
+        friend_status["total_not_lost_num"]
     friend_status["not_lost_friends"] = not_lost_friends
     friend_status["lost_friends"] = name_2_link_map
     return friend_status
@@ -260,14 +266,16 @@ def query_post_json(jsonlink, list, start, end, rule):
     active_list = []
     for link in linklist:
         domain = parse.urlsplit(link).netloc
-        data = session.query(Post).filter(Post.link.like("%{:s}%".format(domain))).all()
+        data = session.query(Post).filter(
+            Post.link.like("%{:s}%".format(domain))).all()
         if data:
             posts += data
             active_list.append(link)
 
     posts.sort(key=lambda x: getattr(x, rule), reverse=True)
     post_num = len(posts)
-    last_update_time = max(x.createAt.strftime("%Y-%m-%d %H:%M:%S") for x in posts)
+    last_update_time = max(x.createAt.strftime(
+        "%Y-%m-%d %H:%M:%S") for x in posts)
 
     if end == -1:
         end = min(post_num, 1000)
