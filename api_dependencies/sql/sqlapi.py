@@ -54,7 +54,7 @@ def query_all(li, start: int = 0, end: int = -1, rule: str = "updated"):
         friends_num = session.query(Friend).count()
         active_num = session.query(Friend).filter_by(error=False).count()
         error_num = friends_num - active_num
-        loss_num = session.query(models.Friend).filter_by(loss=True).count()
+        loss_num = session.query(Friend).filter_by(loss=True).count()
 
         all_friends = session.query(Friend).all()
         friends_loss = []
