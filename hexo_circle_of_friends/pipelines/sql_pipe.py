@@ -152,17 +152,15 @@ class SQLPipeline:
                             error = False
                             break
                 if error:
-                    friend.error = True
-                    friend.loss = False
-                    logger.error("请求失败，请检查链接： %s" % friend.link)
                     try:
                         response = requests.get(friend.link,headers={'User-Agent': 'Mozilla/5.0'}, timeout=5.0)
                         if response.status_code != 200:
                             friend.loss = True
                     except RequestException as e:
                         friend.loss = True
-                else:
-                    friend.error = True
+                    friend.error = True    
+                    logger.error("请求失败，请检查链接： %s" % friend.link)
+
             self.session.add(friend)
             self.session.commit()
 
